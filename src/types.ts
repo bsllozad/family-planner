@@ -35,3 +35,18 @@ export type MissionInstance = {
   xp_value: number; xp_awarded: number; is_excused: boolean
   completed_at: string | null; profile_name?: string; title_es?: string
 }
+
+export type ChildMission = {
+  id: string; scheduled_for: string; due_at: string
+  status: 'pending' | 'completed'; completed_at: string | null
+  title: string; description: string | null; icon: string; category: string
+  is_required: boolean; weekly_flexible: boolean
+  xp_value: number; xp_available: number; xp_awarded: number
+  is_overdue: boolean
+}
+
+export type ChildMissionSummary = {
+  available_xp: number; historical_xp: number
+  completed_count: number; total_count: number
+  missions: ChildMission[]
+}

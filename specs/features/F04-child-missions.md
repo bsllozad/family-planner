@@ -1,6 +1,6 @@
 # F04 — Misiones del niño
 
-**Estado:** Borrador
+**Estado:** Implementado
 
 ## F04-US01 — Ver misiones
 
@@ -37,4 +37,3 @@ Como niño quiero completar misiones atrasadas aunque valgan menos XP.
   una sola vez el 25% de su valor original.
 - Una misión opcional nunca genera penalización.
 - El saldo disponible nunca queda debajo de cero.
-
