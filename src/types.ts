@@ -48,5 +48,10 @@ export type ChildMission = {
 export type ChildMissionSummary = {
   available_xp: number; historical_xp: number
   completed_count: number; total_count: number
+  level: 'Rookie' | 'Explorer' | 'Hero' | 'Champion'
+  level_number: number; level_floor_xp: number
+  next_level: 'Explorer' | 'Hero' | 'Champion' | null
+  next_level_xp: number | null; level_progress_percent: number
+  current_streak: number; best_streak: number
   missions: ChildMission[]
 }
