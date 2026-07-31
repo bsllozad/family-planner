@@ -73,3 +73,14 @@ export type AvatarItemCategory = 'clothing' | 'pet' | 'background' | 'accessory'
 export type AvatarItem = {id:string;key:string;category:AvatarItemCategory;name:string;icon:string;unlocked:boolean;equipped:boolean;unlock_hint:string|null}
 export type BadgeProgress = {id:string;key:string;name:string;description:string;icon:string;earned:boolean;earned_at:string|null;progress:number;target:number}
 export type ChildAvatarSummary = {avatar_key:ChildProfile['avatar_key'];historical_xp:number;items:AvatarItem[];badges:BadgeProgress[];new_badges:BadgeProgress[];new_items:AvatarItem[]}
+
+export type AdminChildSummary = {
+  profile_id:string; display_name:string; avatar_key:ChildProfile['avatar_key']
+  assigned_count:number; completed_count:number; xp_earned:number
+  missed_count:number; penalized_count:number; excused_count:number
+}
+export type AdminDashboardSummary = {pending_redemptions:number;week_start:string;week_end:string;children:AdminChildSummary[]}
+export type CalendarDayStatus = 'complete'|'partial'|'pending'|'none'
+export type CalendarMission = {id:string;title:string;icon:string;status:'pending'|'completed';is_required:boolean;is_excused:boolean;penalty_xp:number;xp_awarded:number}
+export type CalendarDay = {date:string;status:CalendarDayStatus;completed_count:number;total_count:number;missions:CalendarMission[]}
+export type MissionCalendarSummary = {month:string;today:string;profile_id:string;profile_name:string;days:CalendarDay[]}
