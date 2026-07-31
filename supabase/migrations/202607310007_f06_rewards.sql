@@ -1,11 +1,19 @@
 -- F06: reward catalogue, atomic XP reservations and Friday cash redemptions.
 -- Converting the closed enum avoids PostgreSQL's "new enum value" transaction
 -- restriction while keeping an explicit, extensible ledger-kind constraint.
+-- Partial-index predicates retain enum-typed constants, so they must be
+-- rebuilt around the type conversion.
+drop index if exists public.xp_one_penalty_per_instance;
+drop index if exists public.xp_one_completion_per_instance;
 alter table public.xp_transactions alter column kind type text using kind::text,
   alter column mission_instance_id drop not null;
 alter table public.xp_transactions add constraint xp_transaction_kind_allowed check(kind in (
   'completion','reversal','penalty','excuse','reward_spend','reward_refund','cash_spend','cash_refund'
 ));
+create unique index xp_one_penalty_per_instance
+  on public.xp_transactions(mission_instance_id) where kind='penalty';
+create unique index xp_one_completion_per_instance
+  on public.xp_transactions(mission_instance_id) where kind='completion';
 
 create type public.redemption_status as enum ('requested','approved','fulfilled','rejected','cancelled');
 
