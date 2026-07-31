@@ -1,0 +1,24 @@
+import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { Archive, Pencil, Plus, UserRound } from 'lucide-react'
+import { supabase } from '../lib/supabase'
+import type { ChildProfile } from '../types'
+import { avatars } from '../profileAvatars'
+
+type Draft = Pick<ChildProfile,'display_name'|'birth_date'|'language'|'avatar_key'>
+const empty:Draft={display_name:'',birth_date:null,language:'es',avatar_key:'sprout'}
+
+export function ProfileManager({familyId,onChanged}:{familyId:string;onChanged:()=>void}){
+  const [profiles,setProfiles]=useState<ChildProfile[]>([])
+  const [draft,setDraft]=useState<Draft>(empty)
+  const [editing,setEditing]=useState<string|null>(null)
+  const [open,setOpen]=useState(false)
+  const [busy,setBusy]=useState(false)
+  const [error,setError]=useState('')
+  const load=useCallback(async()=>{const {data}=await supabase.from('profiles').select('*').eq('family_id',familyId).eq('role','child').order('created_at');setProfiles((data??[]) as ChildProfile[])},[familyId])
+  useEffect(()=>{void load()},[load])
+  const edit=(profile:ChildProfile)=>{setEditing(profile.id);setDraft({display_name:profile.display_name,birth_date:profile.birth_date,language:profile.language,avatar_key:profile.avatar_key});setError('');setOpen(true)}
+  const close=()=>{setOpen(false);setEditing(null);setDraft(empty);setError('')}
+  const save=async(e:FormEvent)=>{e.preventDefault();setBusy(true);setError('');const values={...draft,display_name:draft.display_name.trim(),family_id:familyId,role:'child' as const};const result=editing?await supabase.from('profiles').update(values).eq('id',editing):await supabase.from('profiles').insert(values);setBusy(false);if(result.error){setError('No se pudo guardar el perfil. Revisa los datos.');return}await load();onChanged();close()}
+  const archive=async(profile:ChildProfile)=>{setBusy(true);await supabase.from('profiles').update({archived_at:new Date().toISOString()}).eq('id',profile.id);setBusy(false);await load();onChanged()}
+  return <section className="profiles-card"><div className="section-heading"><div><span className="eyebrow"><UserRound/> Familia</span><h2>Perfiles infantiles</h2><p>Crea un espacio propio para cada niño.</p></div><button className="primary fit" onClick={()=>setOpen(true)}><Plus/>Nuevo perfil</button></div><div className="profile-grid">{profiles.filter(p=>!p.archived_at).map(profile=><article className="profile-card" key={profile.id}><span className="avatar">{avatars[profile.avatar_key]}</span><div><strong>{profile.display_name}</strong><small>{profile.language==='es'?'Español':'English'}{profile.birth_date?` · ${profile.birth_date}`:''}</small></div><button aria-label={`Editar ${profile.display_name}`} onClick={()=>edit(profile)}><Pencil/></button><button aria-label={`Archivar ${profile.display_name}`} onClick={()=>archive(profile)} disabled={busy}><Archive/></button></article>)}{profiles.every(p=>p.archived_at)&&<p className="muted">Aún no hay perfiles infantiles.</p>}</div>{open&&<div className="modal-backdrop" onMouseDown={close}><section className="modal" role="dialog" aria-modal="true" aria-labelledby="profile-title" onMouseDown={e=>e.stopPropagation()}><button className="modal-close" onClick={close}>×</button><span className="invite-icon"><UserRound/></span><h2 id="profile-title">{editing?'Editar perfil':'Nuevo explorador'}</h2><p>Personaliza su experiencia inicial.</p><form onSubmit={save}><label>Nombre<input required minLength={2} maxLength={80} value={draft.display_name} onChange={e=>setDraft({...draft,display_name:e.target.value})}/></label><label>Fecha de nacimiento<input type="date" required value={draft.birth_date??''} max={new Date().toISOString().slice(0,10)} onChange={e=>setDraft({...draft,birth_date:e.target.value})}/></label><label>Idioma<select value={draft.language} onChange={e=>setDraft({...draft,language:e.target.value as Draft['language']})}><option value="es">Español</option><option value="en">English</option></select></label><fieldset><legend>Avatar inicial</legend><div className="avatar-options">{Object.entries(avatars).map(([key,value])=><label key={key} className={draft.avatar_key===key?'selected':''}><input type="radio" name="avatar" value={key} checked={draft.avatar_key===key} onChange={()=>setDraft({...draft,avatar_key:key as Draft['avatar_key']})}/><span>{value}</span></label>)}</div></fieldset>{error&&<div className="alert error" role="alert">{error}</div>}<button className="primary" disabled={busy}>{busy?'Guardando…':'Guardar perfil'}</button></form></section></div>}</section>
+}

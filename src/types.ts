@@ -7,3 +7,15 @@ export type FamilyContext = {
   profile_id: string | null
   profile_name: string | null
 }
+
+export type ChildProfile = {
+  id: string
+  family_id: string
+  display_name: string
+  role: 'child'
+  birth_date: string | null
+  language: 'es' | 'en'
+  avatar_key: 'sprout' | 'rocket' | 'star' | 'fox' | 'panda'
+  archived_at: string | null
+  created_at: string
+}
