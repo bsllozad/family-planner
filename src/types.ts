@@ -19,3 +19,19 @@ export type ChildProfile = {
   archived_at: string | null
   created_at: string
 }
+
+export type Recurrence = 'once' | 'daily' | 'weekly'
+export type MissionTemplate = {
+  id: string; family_id: string; title_es: string; title_en: string
+  description_es: string | null; description_en: string | null
+  icon: string; category: string; xp_value: number; is_required: boolean
+  recurrence: Recurrence; weekly_days: number[]; weekly_flexible: boolean
+  starts_on: string; archived_at: string | null; created_at: string
+  assignee_ids: string[]
+}
+export type MissionInstance = {
+  id: string; mission_template_id: string; profile_id: string
+  scheduled_for: string; due_at: string; status: 'pending' | 'completed'
+  xp_value: number; xp_awarded: number; is_excused: boolean
+  completed_at: string | null; profile_name?: string; title_es?: string
+}
