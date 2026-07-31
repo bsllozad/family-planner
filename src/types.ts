@@ -68,3 +68,8 @@ export type Redemption = {
   xp_amount:number;cad_amount:number|null;status:RedemptionStatus;requested_at:string
 }
 export type ChildRewardsSummary = {available_xp:number;cash_available:boolean;rewards:ChildReward[];redemptions:Redemption[]}
+
+export type AvatarItemCategory = 'clothing' | 'pet' | 'background' | 'accessory'
+export type AvatarItem = {id:string;key:string;category:AvatarItemCategory;name:string;icon:string;unlocked:boolean;equipped:boolean;unlock_hint:string|null}
+export type BadgeProgress = {id:string;key:string;name:string;description:string;icon:string;earned:boolean;earned_at:string|null;progress:number;target:number}
+export type ChildAvatarSummary = {avatar_key:ChildProfile['avatar_key'];historical_xp:number;items:AvatarItem[];badges:BadgeProgress[];new_badges:BadgeProgress[];new_items:AvatarItem[]}
