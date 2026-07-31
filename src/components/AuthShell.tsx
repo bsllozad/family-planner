@@ -1,0 +1,4 @@
+import type { ReactNode } from 'react'
+import { CheckCircle2, Sparkles, Trophy } from 'lucide-react'
+
+export function AuthShell({children}:{children:ReactNode}){return <main className="auth-shell"><section className="story-panel"><a className="logo" href="/"><span className="brand-mark">K</span><span>kinquest</span></a><div className="story-copy"><span className="eyebrow"><Sparkles size={14}/> La aventura empieza en casa</span><h1>Pequeños hábitos.<br/><em>Grandes héroes.</em></h1><p>Convierte cada tarea cotidiana en una misión que une a toda la familia.</p><div className="benefits"><span><CheckCircle2/>Misiones claras</span><span><Trophy/>Progreso que motiva</span></div></div><div className="orb orb-one"/><div className="orb orb-two"/></section><section className="form-panel">{children}</section></main>}
