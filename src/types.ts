@@ -6,6 +6,7 @@ export type FamilyContext = {
   role: Role
   profile_id: string | null
   profile_name: string | null
+  language: 'es' | 'en'
 }
 
 export type ChildProfile = {
