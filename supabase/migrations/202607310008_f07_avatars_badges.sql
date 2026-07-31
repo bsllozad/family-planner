@@ -4,7 +4,8 @@ create type public.avatar_item_category as enum ('clothing','pet','background','
 create table public.badges (
   id uuid primary key, key text not null unique, name_es text not null, name_en text not null,
   description_es text not null, description_en text not null, icon text not null,
-  criterion text not null unique, target integer not null check(target>0), sort_order integer not null
+  criterion text not null, target integer not null check(target>0), sort_order integer not null,
+  unique(criterion,target)
 );
 create table public.profile_badges (
   family_id uuid not null references public.families(id) on delete cascade,
@@ -74,7 +75,7 @@ begin
   end loop;
   select count(*)::integer into perfect from (select date_trunc('week',scheduled_for)::date from public.mission_instances where profile_id=p_profile_id and is_required and not is_excused group by 1 having count(*)>0 and bool_and(status='completed')) weeks;
   for badge in select * from public.badges loop
-    if case badge.criterion when 'completed_missions' then completed when 'best_streak' then best when 'historical_xp' then historical when 'perfect_weeks' then perfect else 0 end >= badge.target then
+    if (case badge.criterion when 'completed_missions' then completed when 'best_streak' then best when 'historical_xp' then historical when 'perfect_weeks' then perfect else 0 end) >= badge.target then
       insert into public.profile_badges(family_id,profile_id,badge_id) values(f,p_profile_id,badge.id) on conflict do nothing;
     end if;
   end loop;
