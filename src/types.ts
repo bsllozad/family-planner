@@ -55,3 +55,16 @@ export type ChildMissionSummary = {
   current_streak: number; best_streak: number
   missions: ChildMission[]
 }
+
+export type RedemptionStatus = 'requested' | 'approved' | 'fulfilled' | 'rejected' | 'cancelled'
+export type Reward = {
+  id:string; family_id?:string; title_es:string; title_en:string
+  description_es:string|null; description_en:string|null; icon:string
+  xp_cost:number; is_available:boolean; archived_at:string|null; assignee_ids:string[]
+}
+export type ChildReward = {id:string;title:string;description:string|null;icon:string;xp_cost:number}
+export type Redemption = {
+  id:string;kind:'reward'|'cash';profile_name?:string;title:string;icon:string
+  xp_amount:number;cad_amount:number|null;status:RedemptionStatus;requested_at:string
+}
+export type ChildRewardsSummary = {available_xp:number;cash_available:boolean;rewards:ChildReward[];redemptions:Redemption[]}
