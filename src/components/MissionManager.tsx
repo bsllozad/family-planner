@@ -15,7 +15,45 @@ export function MissionManager({children}:{familyId:string;children:ChildProfile
   useEffect(()=>{void load()},[load])
   const close=()=>{setOpen(false);setEditing(null);setDraft(blank());setError('')}
   const edit=(m:MissionTemplate)=>{setEditing(m.id);setDraft({title_es:m.title_es,title_en:m.title_en,description_es:m.description_es??'',description_en:m.description_en??'',icon:m.icon,category:m.category,xp_value:m.xp_value,is_required:m.is_required,recurrence:m.recurrence,weekly_days:m.weekly_days??[],weekly_flexible:m.weekly_flexible,starts_on:m.starts_on,assignee_ids:m.assignee_ids??[]});setOpen(true)}
-  const save=async(e:FormEvent)=>{e.preventDefault();setError('');if(!draft.assignee_ids.length){setError('Selecciona al menos un niño.');return}if(draft.recurrence==='weekly'&&!draft.weekly_flexible&&!draft.weekly_days.length){setError('Selecciona al menos un día o activa la semana flexible.');return}setBusy(true);const args={p_title_es:draft.title_es.trim(),p_title_en:draft.title_en.trim(),p_description_es:draft.description_es.trim()||null,p_description_en:draft.description_en.trim()||null,p_icon:draft.icon.trim(),p_category:draft.category.trim(),p_xp_value:draft.xp_value,p_is_required:draft.is_required,p_recurrence:draft.recurrence,p_weekly_days:draft.weekly_days,p_weekly_flexible:draft.weekly_flexible,p_starts_on:draft.starts_on,p_assignee_ids:draft.assignee_ids};const result=editing?await supabase.rpc('update_mission_template',{p_template_id:editing,...args}):await supabase.rpc('create_mission_template',args);setBusy(false);if(result.error){setError(result.error.message.includes('xp outside')?'El XP está fuera de los límites configurados.':'No se pudo guardar la misión.');return}const wasEditing=Boolean(editing);close();setNotice(wasEditing?'Misión actualizada sin alterar el historial.':'Misión creada y programada.');await load()}
+  const save=async(e:FormEvent)=>{
+    e.preventDefault()
+    if(busy)return
+    setError('')
+    if(!navigator.onLine){setError('No hay conexión. Conéctate a internet e inténtalo de nuevo.');return}
+    if(!draft.assignee_ids.length){setError('Selecciona al menos un niño.');return}
+    if(draft.recurrence==='weekly'&&!draft.weekly_flexible&&!draft.weekly_days.length){setError('Selecciona al menos un día o activa la semana flexible.');return}
+
+    const args={p_title_es:draft.title_es.trim(),p_title_en:draft.title_en.trim(),p_description_es:draft.description_es.trim()||null,p_description_en:draft.description_en.trim()||null,p_icon:draft.icon.trim(),p_category:draft.category.trim(),p_xp_value:draft.xp_value,p_is_required:draft.is_required,p_recurrence:draft.recurrence,p_weekly_days:draft.weekly_days,p_weekly_flexible:draft.weekly_flexible,p_starts_on:draft.starts_on,p_assignee_ids:draft.assignee_ids}
+    const controller=new AbortController()
+    const timeout=window.setTimeout(()=>controller.abort(),15000)
+    setBusy(true)
+    try{
+      const request=editing
+        ?supabase.rpc('update_mission_template',{p_template_id:editing,...args})
+        :supabase.rpc('create_mission_template',args)
+      const result=await request.abortSignal(controller.signal)
+      if(result.error){
+        const message=result.error.message.toLowerCase()
+        setError(message.includes('xp outside')
+          ?'El XP está fuera de los límites configurados.'
+          :message.includes('abort')||message.includes('timeout')
+            ?'La conexión tardó demasiado. Comprueba tu internet e inténtalo de nuevo.'
+            :'No se pudo guardar la misión. Inténtalo de nuevo.')
+        return
+      }
+      const wasEditing=Boolean(editing)
+      close()
+      setNotice(wasEditing?'Misión actualizada sin alterar el historial.':'Misión creada y programada.')
+      await load()
+    }catch{
+      setError(controller.signal.aborted
+        ?'La conexión tardó demasiado. Comprueba tu internet e inténtalo de nuevo.'
+        :'Ocurrió un error de conexión. Inténtalo de nuevo.')
+    }finally{
+      window.clearTimeout(timeout)
+      setBusy(false)
+    }
+  }
   const archive=async(id:string)=>{setBusy(true);const r=await supabase.rpc('archive_mission_template',{p_template_id:id});setBusy(false);if(r.error)setError('No se pudo archivar la misión.');else{setNotice('Misión archivada; su historial permanece disponible.');await load()}}
   const correct=async(id:string,action:'revert'|'excuse')=>{setBusy(true);const r=await supabase.rpc(action==='revert'?'revert_mission_completion':'excuse_mission_instance',{p_instance_id:id,p_reason:action==='revert'?'Corrección administrativa':'Excepción justificada'});setBusy(false);if(r.error)setError('No se pudo aplicar la corrección.');else{setNotice(action==='revert'?'Finalización revertida y XP retirado.':'Misión justificada sin XP.');await load()}}
   return <section className="missions-card"><div className="section-heading"><div><span className="eyebrow"><ClipboardList/> Misiones</span><h2>Administración de misiones</h2><p>Asigna responsabilidades, XP y recurrencia.</p></div><button className="primary fit" onClick={()=>setOpen(true)} disabled={!children.length}><Plus/>Nueva misión</button></div>{notice&&<div className="alert success mission-notice">{notice}</div>}{error&&!open&&<div className="alert error mission-notice">{error}</div>}
