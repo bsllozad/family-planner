@@ -17,7 +17,7 @@ export function ProfileManager({familyId,onChanged}:{familyId:string;onChanged:(
   const [loginProfile,setLoginProfile]=useState<ChildProfile|null>(null)
   const [loginEmail,setLoginEmail]=useState('')
   const [loginLink,setLoginLink]=useState('')
-  const load=useCallback(async()=>{const {data}=await supabase.from('profiles').select('*').eq('family_id',familyId).eq('role','child').order('created_at');setProfiles((data??[]) as ChildProfile[])},[familyId])
+  const load=useCallback(async()=>{const {data,error:e}=await supabase.rpc('list_child_profiles_admin');if(e){setError('No se pudieron cargar los perfiles infantiles. Recarga la página.');return}setProfiles((data??[]) as ChildProfile[])},[])
   useEffect(()=>{void load()},[load])
   const edit=(profile:ChildProfile)=>{setEditing(profile.id);setDraft({display_name:profile.display_name,birth_date:profile.birth_date,language:profile.language,avatar_key:profile.avatar_key});setError('');setOpen(true)}
   const close=()=>{setOpen(false);setEditing(null);setDraft(empty);setError('')}

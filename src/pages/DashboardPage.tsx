@@ -25,7 +25,7 @@ export function DashboardPage(){
   const [pinPurpose,setPinPurpose]=useState<'set'|'unlock'>('set')
   const [email,setEmail]=useState(''),[link,setLink]=useState(''),[pin,setPin]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false)
   const child=context?.role==='child',sharedChild=context?.access_mode==='shared_child'
-  const loadChildren=useCallback(async()=>{if(!context||child)return;const {data}=await supabase.from('profiles').select('*').eq('family_id',context.family_id).eq('role','child').is('archived_at',null).order('created_at');setChildren((data??[]) as ChildProfile[])},[context,child])
+  const loadChildren=useCallback(async()=>{if(!context||child)return;const {data,error:e}=await supabase.rpc('list_child_profiles_admin');if(e){setError('No se pudieron cargar los perfiles infantiles. Recarga la página.');return}setChildren(((data??[]) as ChildProfile[]).filter(profile=>!profile.archived_at))},[context,child])
   useEffect(()=>{void loadChildren()},[loadChildren])
   if(!context)return null
   const invite=async(e:FormEvent)=>{e.preventDefault();setBusy(true);setError('');const {data,error:e2}=await supabase.rpc('create_family_invitation',{p_email:email.trim()});setBusy(false);if(e2){setError('No se pudo crear la invitación. Comprueba el correo.');return}setLink(`${location.origin}/invite/${data}`)}
