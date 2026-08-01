@@ -7,6 +7,7 @@ export type FamilyContext = {
   profile_id: string | null
   profile_name: string | null
   language: 'es' | 'en'
+  access_mode: 'admin' | 'shared_child' | 'direct_child'
 }
 
 export type ChildProfile = {

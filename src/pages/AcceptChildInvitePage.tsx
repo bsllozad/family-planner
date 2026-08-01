@@ -1,0 +1,20 @@
+import { useEffect, useState, type FormEvent } from 'react'
+import { Check, Eye, EyeOff, KeyRound, Mail, Rocket } from 'lucide-react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { z } from 'zod'
+import { useAuth } from '../auth/AuthProvider'
+import { AuthShell } from '../components/AuthShell'
+import { supabase } from '../lib/supabase'
+
+const schema=z.object({email:z.string().email('Escribe un correo válido.'),password:z.string().min(6,'La contraseña debe tener al menos 6 caracteres.')})
+
+export function AcceptChildInvitePage(){
+  const {token}=useParams(),nav=useNavigate(),{session,refreshContext}=useAuth()
+  const [email,setEmail]=useState(''),[password,setPassword]=useState(''),[show,setShow]=useState(false)
+  const [mode,setMode]=useState<'signup'|'login'>('signup'),[state,setState]=useState<'ready'|'auth'|'accepting'|'done'|'error'>('ready')
+  const [message,setMessage]=useState('')
+  useEffect(()=>{if(!session||!token||state==='accepting'||state==='done')return;setState('accepting');void supabase.rpc('accept_child_login_invitation',{p_token:token}).then(async({error})=>{if(error){setMessage('El enlace expiró, ya fue utilizado o corresponde a otro correo.');setState('error');return}await refreshContext();setState('done');window.setTimeout(()=>nav('/'),900)})},[nav,refreshContext,session,state,token])
+  const submit=async(e:FormEvent)=>{e.preventDefault();setMessage('');const parsed=schema.safeParse({email,password});if(!parsed.success){setMessage(parsed.error.issues[0].message);return}setState('auth');const next=`${window.location.origin}/child-invite/${token}`;const result=mode==='signup'?await supabase.auth.signUp({email,password,options:{emailRedirectTo:next}}):await supabase.auth.signInWithPassword({email,password});if(result.error){setState('ready');setMessage(mode==='signup'?'No pudimos crear la cuenta. Quizá ese correo ya tiene una; prueba iniciar sesión.':'No pudimos iniciar sesión. Revisa tus datos.');return}if(mode==='signup'&&!result.data.session){setMessage('Revisa el correo y confirma la cuenta. Volverás aquí para terminar.');setState('ready')}}
+  if(session)return <main className="center-page"><section className="onboarding-card compact"><span className="invite-icon">{state==='done'?<Check/>:<Rocket/>}</span><h1>{state==='done'?'¡Tu aventura está lista!':state==='error'?'No se pudo activar el acceso':'Preparando tu perfil…'}</h1><p>{state==='error'?message:'Estamos conectando tu cuenta con tus misiones.'}</p>{state==='error'&&<button className="secondary" onClick={()=>void supabase.auth.signOut()}>Usar otra cuenta</button>}</section></main>
+  return <AuthShell><div className="auth-card"><span className="mobile-logo"><span className="brand-mark">K</span>kinquest</span><div><span className="kicker">Invitación infantil</span><h2>{mode==='signup'?'Crea tu acceso':'Entra con tu cuenta'}</h2><p>Usa exactamente el correo al que el adulto asignó este perfil.</p></div><form onSubmit={submit}><label>Correo electrónico<div className="input-wrap"><Mail/><input type="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)}/></div></label><label>Contraseña<div className="input-wrap"><KeyRound/><input type={show?'text':'password'} autoComplete={mode==='signup'?'new-password':'current-password'} value={password} onChange={e=>setPassword(e.target.value)}/><button className="eye" type="button" aria-label="Mostrar contraseña" onClick={()=>setShow(!show)}>{show?<EyeOff/>:<Eye/>}</button></div></label>{message&&<div className={message.startsWith('Revisa el correo')?'alert success':'alert error'}>{message}</div>}<button className="primary" disabled={state==='auth'}>{state==='auth'?'Un momento…':mode==='signup'?'Crear acceso infantil':'Iniciar sesión'}</button></form><p className="switch">{mode==='signup'?'¿Ya creaste la cuenta?':'¿Es la primera vez?'} <button onClick={()=>{setMode(mode==='signup'?'login':'signup');setMessage('')}}>{mode==='signup'?'Iniciar sesión':'Crear acceso'}</button></p></div></AuthShell>
+}
